@@ -34,7 +34,7 @@ jobs:
 
       - name: Setup Terragrunt
         run: |
-          TG_VERSION="${{ env.TG_VERSION}}"
+          TG_VERSION="${{ env.TG_VERSION }}"
           ARCH=$(uname -m)
           if [ "$ARCH" = "x86_64" ]; then
             ARCH_TYPE="amd64"
@@ -47,7 +47,6 @@ jobs:
           curl -L -o terragrunt https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_${ARCH_TYPE}
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/
-          
 
       - name: Setup kubectl
         run: |
@@ -68,8 +67,11 @@ jobs:
 
       - name: Update kubeconfig
         run: |
-          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.CLUSTER_NAME }} --alias ${{ env.CLUSTER_NAME }}-dev
-    
+          aws eks update-kubeconfig \
+            --region ${{ env.AWS_REGION }} \
+            --name ${{ env.CLUSTER_NAME }} \
+            --alias ${{ env.CLUSTER_NAME }}-dev
+
       - name: Get image tags
         run: |
           API_TAG=$(aws ssm get-parameter --name "/satubinha/images/api" --query "Parameter.Value" --output text)
@@ -79,8 +81,8 @@ jobs:
           echo "API_TAG=$API_TAG" >> $GITHUB_ENV
           echo "FRONT_TAG=$FRONT_TAG" >> $GITHUB_ENV
           echo "MIGRATE_TAG=$MIGRATE_TAG" >> $GITHUB_ENV
-          echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_ENV 
-      
+          echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_ENV
+
       - name: Verify cluster access
         run: |
           kubectl get nodes --context ${{ env.CLUSTER_NAME }}-dev
@@ -89,31 +91,52 @@ jobs:
         run: |
           APP_ROLE_ARN=$(cd environments/dev/app-infra && terragrunt output -raw app_role_arn)
           envsubst < k8s/dev/serviceaccount.yaml | kubectl apply -f - \
-          --context ${{ env.CLUSTER_NAME }}-dev
+            --context ${{ env.CLUSTER_NAME }}-dev
+
+      - name: Apply configmap
+        run: |
+          kubectl apply -f k8s/dev/configmap.yaml \
+            --context ${{ env.CLUSTER_NAME }}-dev
 
       - name: Apply SecretProviderClass
         run: |
           kubectl apply -f k8s/dev/secretproviderclass.yaml \
-          --context ${{ env.CLUSTER_NAME }}-dev
+            --context ${{ env.CLUSTER_NAME }}-dev
+
+      - name: Apply PVC
+        run: |
+          kubectl apply -f k8s/dev/pvc.yaml \
+            --context ${{ env.CLUSTER_NAME }}-dev
+
+      - name: Apply DB deployment
+        run: |
+          kubectl apply -f k8s/dev/deployment-db.yaml \
+            --context ${{ env.CLUSTER_NAME }}-dev
+
+      - name: Wait for DB ready
+        run: |
+          kubectl rollout status deployment/db \
+            --timeout=120s \
+            --context ${{ env.CLUSTER_NAME }}-dev
 
       - name: Run migrations
         run: |
           envsubst < k8s/dev/job-migrate.yaml | kubectl apply -f - \
-          --context ${{ env.CLUSTER_NAME }}-dev
+            --context ${{ env.CLUSTER_NAME }}-dev
 
       - name: Wait for migrations
         run: |
           kubectl wait --for=condition=complete job/migrate \
-          --timeout=120s \
-          --context ${{ env.CLUSTER_NAME }}-dev
+            --timeout=120s \
+            --context ${{ env.CLUSTER_NAME }}-dev
 
       - name: Deploy application
         run: |
           envsubst < k8s/dev/deployment-api.yaml | kubectl apply -f - \
-          --context ${{ env.CLUSTER_NAME }}-dev
+            --context ${{ env.CLUSTER_NAME }}-dev
           envsubst < k8s/dev/deployment-front.yaml | kubectl apply -f - \
-          --context ${{ env.CLUSTER_NAME }}-dev
+            --context ${{ env.CLUSTER_NAME }}-dev
           kubectl apply -f k8s/dev/service.yaml \
-          --context ${{ env.CLUSTER_NAME }}-dev
+            --context ${{ env.CLUSTER_NAME }}-dev
           kubectl apply -f k8s/dev/ingress.yaml \
-          --context ${{ env.CLUSTER_NAME }}-dev  
+            --context ${{ env.CLUSTER_NAME }}-dev
