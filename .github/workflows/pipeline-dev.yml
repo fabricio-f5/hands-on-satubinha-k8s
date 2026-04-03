@@ -70,33 +70,45 @@ jobs:
         run: |
           aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.CLUSTER_NAME }} --alias ${{ env.CLUSTER_NAME }}-dev
     
+      - name: Get image tags
+        run: |
+          API_TAG=$(aws ssm get-parameter --name "/satubinha/images/api" --query "Parameter.Value" --output text)
+          FRONT_TAG=$(aws ssm get-parameter --name "/satubinha/images/front" --query "Parameter.Value" --output text)
+          MIGRATE_TAG=$(aws ssm get-parameter --name "/satubinha/images/migrate" --query "Parameter.Value" --output text)
+          ECR_REGISTRY="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com"
+          echo "API_TAG=$API_TAG" >> $GITHUB_ENV
+          echo "FRONT_TAG=$FRONT_TAG" >> $GITHUB_ENV
+          echo "MIGRATE_TAG=$MIGRATE_TAG" >> $GITHUB_ENV
+          echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_ENV 
+      
       - name: Verify cluster access
         run: |
           kubectl get nodes --context ${{ env.CLUSTER_NAME }}-dev
 
       - name: Apply service account
         run: |
-            APP_ROLE_ARN=$(cd environments/dev/app-infra && terragrunt output -raw app_role_arn)
-            envsubst < k8s/dev/serviceaccount.yaml | kubectl apply -f - \
-            --context ${{ env.CLUSTER_NAME }}-dev
+          APP_ROLE_ARN=$(cd environments/dev/app-infra && terragrunt output -raw app_role_arn)
+          envsubst < k8s/dev/serviceaccount.yaml | kubectl apply -f - \
+          --context ${{ env.CLUSTER_NAME }}-dev
 
       - name: Run migrations
         run: |
-            ECR_REGISTRY="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com"
-            IMAGE_TAG=$(git rev-parse --short HEAD)
-            export ECR_REGISTRY IMAGE_TAG
-            envsubst < k8s/dev/job-migrate.yaml | kubectl apply -f - \
-            --context ${{ env.CLUSTER_NAME }}-dev
+          envsubst < k8s/dev/job-migrate.yaml | kubectl apply -f - \
+          --context ${{ env.CLUSTER_NAME }}-dev
 
-            - name: Wait for migrations
-                run: |
-                    kubectl wait --for=condition=complete job/migrate \
-                    --timeout=120s \
-                    --context ${{ env.CLUSTER_NAME }}-dev
+      - name: Wait for migrations
+        run: |
+          kubectl wait --for=condition=complete job/migrate \
+          --timeout=120s \
+          --context ${{ env.CLUSTER_NAME }}-dev
 
       - name: Deploy application
         run: |
-            kubectl apply -f k8s/dev/deployment-api.yaml --context ${{ env.CLUSTER_NAME }}-dev
-            kubectl apply -f k8s/dev/deployment-front.yaml --context ${{ env.CLUSTER_NAME }}-dev
-            kubectl apply -f k8s/dev/service.yaml --context ${{ env.CLUSTER_NAME }}-dev
-            kubectl apply -f k8s/dev/ingress.yaml --context ${{ env.CLUSTER_NAME }}-dev   
+          envsubst < k8s/dev/deployment-api.yaml | kubectl apply -f - \
+          --context ${{ env.CLUSTER_NAME }}-dev
+          envsubst < k8s/dev/deployment-front.yaml | kubectl apply -f - \
+          --context ${{ env.CLUSTER_NAME }}-dev
+          kubectl apply -f k8s/dev/service.yaml \
+          --context ${{ env.CLUSTER_NAME }}-dev
+          kubectl apply -f k8s/dev/ingress.yaml \
+          --context ${{ env.CLUSTER_NAME }}-dev  
