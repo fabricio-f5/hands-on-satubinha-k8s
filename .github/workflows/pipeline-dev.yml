@@ -1,0 +1,62 @@
+name: "[Dev] Deploy"
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    
+
+env:
+  AWS_REGION: us-east-1
+  CLUSTER_NAME: satubinha-dev
+  KUBECTL_VERSION: 1.27.3
+
+jobs:
+  deploy:
+    name: Deploy to Dev
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    concurrency:
+      group: dev/deploy
+      cancel-in-progress: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-${{ github.run_id }}
+
+      - name: Setup kubectl
+        run: |
+          KUBECTL_VERSION="${{ env.KUBECTL_VERSION }}"
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "x86_64" ]; then
+            ARCH_TYPE="amd64"
+          elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+            ARCH_TYPE="arm64"
+          else
+            echo "Unsupported architecture: $ARCH"
+            exit 1
+          fi
+          curl -Lo kubectl "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${ARCH_TYPE}/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+          kubectl version --client --short
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.CLUSTER_NAME }} --alias ${{ env.CLUSTER_NAME }}-dev
+    
+      - name: Verify cluster access
+        run: |
+          kubectl get nodes --context ${{ env.CLUSTER_NAME }}-dev
+
+      - name: Deploy application
+        run: |
+          kubectl apply -f k8s/dev --context ${{ env.CLUSTER_NAME }}-dev   
