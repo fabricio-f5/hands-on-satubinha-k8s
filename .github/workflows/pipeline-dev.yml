@@ -82,13 +82,17 @@ jobs:
 
       - name: Run migrations
         run: |
-            kubectl apply -f k8s/dev/job-migrate.yaml --context ${{ env.CLUSTER_NAME }}-dev
-
-      - name: Wait for migrations
-        run: |
-            kubectl wait --for=condition=complete job/migrate \
-            --timeout=120s \
+            ECR_REGISTRY="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com"
+            IMAGE_TAG=$(git rev-parse --short HEAD)
+            export ECR_REGISTRY IMAGE_TAG
+            envsubst < k8s/dev/job-migrate.yaml | kubectl apply -f - \
             --context ${{ env.CLUSTER_NAME }}-dev
+
+            - name: Wait for migrations
+                run: |
+                    kubectl wait --for=condition=complete job/migrate \
+                    --timeout=120s \
+                    --context ${{ env.CLUSTER_NAME }}-dev
 
       - name: Deploy application
         run: |
