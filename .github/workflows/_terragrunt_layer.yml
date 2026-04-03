@@ -1,0 +1,142 @@
+name: "Reusable — Terragrunt Layer"
+on:
+  workflow_call:
+    inputs:
+      layer:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+      action:
+        required: true
+        type: string
+    secrets:
+      AWS_ROLE_ARN:
+        required: true
+env:
+  AWS_REGION: us-east-1
+  TF_VERSION: 1.10.0
+  TG_VERSION: 0.67.0
+  CHECKOV_VERSION: 3.2.0
+
+jobs:
+  layer:
+    name: "${{ inputs.environment }} - ${{ inputs.layer }} (${{ inputs.action }})"
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    concurrency:
+      group: ${{ inputs.environment }}/${{ inputs.layer }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Setup Terragrunt
+        run: |
+          TG_VERSION="${{ env.TG_VERSION }}"
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "x86_64" ]; then
+            ARCH_TYPE="amd64"
+          elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+            ARCH_TYPE="arm64"
+          else
+            echo "Unsupported architecture: $ARCH"
+            exit 1
+          fi
+          curl -Lo terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_${ARCH_TYPE}"
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/
+          terragrunt --version
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-${{ github.run_id }}
+
+      - name: Terraform Format Check
+        working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
+        run: terraform fmt -check
+
+      - name: Terragrunt Validate
+        working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
+        run: terragrunt --terragrunt-non-interactive validate
+
+      - name: Checkov Scan
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
+          framework: terraform
+          config_file: ${{ github.workspace }}/.checkov.yaml
+          soft_fail: true
+          output_format: cli
+          output_file_path: checkov-report.txt
+          download_external_modules: false
+
+      - name: Upload Checkov report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: checkov-report-${{ inputs.environment }}-${{ inputs.layer }}-${{ github.run_id }}
+          path: checkov-report.txt
+          retention-days: 30
+
+      - name: Terragrunt Plan
+        if: ${{ inputs.action == 'plan' || inputs.action == 'apply' }}
+        working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
+        run: terragrunt --terragrunt-non-interactive plan -out=tfplan
+
+      # ------------------------------------------------------------
+      # Apply
+      # ------------------------------------------------------------
+      - name: Terragrunt Apply
+        if: ${{ inputs.action == 'apply' }}
+        working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
+        run: |
+          echo "Aplicando network do dev..."
+          terragrunt --terragrunt-non-interactive apply -auto-approve tfplan
+
+      - name: Terragrunt Output
+        if: ${{ inputs.action == 'apply' }}
+        working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
+        run: terragrunt --terragrunt-non-interactive output -json
+
+      # ------------------------------------------------------------
+      # Plan Destroy — mostra o que seria destruído, sem destruir
+      # ------------------------------------------------------------
+      - name: Terragrunt Plan Destroy
+        if: ${{ inputs.action == 'plan_destroy' }}
+        working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
+        run: |
+          echo "Calculando impacto do destroy — nenhum recurso será removido..."
+          terragrunt --terragrunt-non-interactive plan -destroy -out=tfplan_destroy
+          terragrunt --terragrunt-non-interactive show -no-color tfplan_destroy
+
+      # ------------------------------------------------------------
+      # Destroy — protecção contra acidente
+      # Só executa se action for explicitamente 'destroy'
+      # ------------------------------------------------------------
+      - name: Confirm Destroy Intent
+        if: ${{ inputs.action == 'destroy' }}
+        run: |
+          echo "⚠️  DESTROY solicitado por: ${{ github.actor }}"
+          echo "⚠️  Ambiente: ${{ inputs.environment }} - ${{ inputs.layer }}"
+          echo "⚠️  Commit: ${{ github.sha }}"
+          echo "Recursos de rede serão permanentemente removidos."
+
+      - name: Terragrunt Destroy
+        if: ${{ inputs.action == 'destroy' }}
+        working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
+        run: |
+          terragrunt --terragrunt-non-interactive destroy -auto-approve
+
+ 
