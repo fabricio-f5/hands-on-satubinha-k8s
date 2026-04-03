@@ -57,6 +57,24 @@ jobs:
         run: |
           kubectl get nodes --context ${{ env.CLUSTER_NAME }}-dev
 
+      - name: Apply configmap and secrets
+        run: |
+            kubectl apply -f k8s/dev/configmap.yaml --context ${{ env.CLUSTER_NAME }}-dev
+            kubectl apply -f k8s/dev/secret.yaml --context ${{ env.CLUSTER_NAME }}-dev
+
+      - name: Run migrations
+        run: |
+            kubectl apply -f k8s/dev/job-migrate.yaml --context ${{ env.CLUSTER_NAME }}-dev
+
+      - name: Wait for migrations
+        run: |
+            kubectl wait --for=condition=complete job/migrate \
+            --timeout=120s \
+            --context ${{ env.CLUSTER_NAME }}-dev
+
       - name: Deploy application
         run: |
-          kubectl apply -f k8s/dev --context ${{ env.CLUSTER_NAME }}-dev   
+            kubectl apply -f k8s/dev/deployment-api.yaml --context ${{ env.CLUSTER_NAME }}-dev
+            kubectl apply -f k8s/dev/deployment-front.yaml --context ${{ env.CLUSTER_NAME }}-dev
+            kubectl apply -f k8s/dev/service.yaml --context ${{ env.CLUSTER_NAME }}-dev
+            kubectl apply -f k8s/dev/ingress.yaml --context ${{ env.CLUSTER_NAME }}-dev   
