@@ -91,6 +91,11 @@ jobs:
           envsubst < k8s/dev/serviceaccount.yaml | kubectl apply -f - \
           --context ${{ env.CLUSTER_NAME }}-dev
 
+      - name: Apply SecretProviderClass
+        run: |
+          kubectl apply -f k8s/dev/secretproviderclass.yaml \
+          --context ${{ env.CLUSTER_NAME }}-dev
+
       - name: Run migrations
         run: |
           envsubst < k8s/dev/job-migrate.yaml | kubectl apply -f - \
