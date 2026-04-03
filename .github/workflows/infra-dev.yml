@@ -1,0 +1,48 @@
+name: "[Dev] Infra"
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Acção a executar'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - plan_destroy
+          - destroy
+    
+
+jobs:
+  network:
+    uses: ./.github/workflows/_terragrunt-layer.yml
+    with:
+      layer: network
+      environment: dev
+      action: ${{ inputs.action }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+  eks:
+    needs: network
+    uses: ./.github/workflows/_terragrunt-layer.yml
+    with:
+      layer: eks
+      environment: dev
+      action: ${{ inputs.action }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+  app-infra:
+    needs: eks
+    uses: ./.github/workflows/_terragrunt-layer.yml
+    with:
+      layer: app-infra
+      environment: dev
+      action: ${{ inputs.action }}
+    secrets:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+
+  
