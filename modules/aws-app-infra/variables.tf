@@ -8,13 +8,13 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "cluster_endpoint" {
-  description = "Endpoint do cluster EKS — output da layer eks"
+variable "oidc_provider_arn" {
+  description = "ARN do OIDC Provider — output da layer eks"
   type        = string
 }
 
-variable "cluster_ca_certificate" {
-  description = "Certificado CA do cluster — output da layer eks"
+variable "oidc_provider_url" {
+  description = "URL do OIDC Provider — output da layer eks"
   type        = string
 }
 
