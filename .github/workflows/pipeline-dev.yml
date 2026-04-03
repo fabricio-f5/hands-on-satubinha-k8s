@@ -10,6 +10,7 @@ env:
   AWS_REGION: us-east-1
   CLUSTER_NAME: satubinha-dev
   KUBECTL_VERSION: 1.27.3
+  TERRAGRUNT_VERSION: 0.44.0
 
 jobs:
   deploy:
@@ -31,6 +32,14 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: GitHubActions-${{ github.run_id }}
+
+      - name: Setup Terragrunt
+        run: |
+          TERRAGRUNT_VERSION="${{ env.TERRAGRUNT_VERSION:}}"
+          curl -L -o terragrunt https://github.com/gruntwork-io/terragrunt/releases/download/v0.44.0/terragrunt_linux_amd64
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/
+          
 
       - name: Setup kubectl
         run: |
@@ -57,10 +66,11 @@ jobs:
         run: |
           kubectl get nodes --context ${{ env.CLUSTER_NAME }}-dev
 
-      - name: Apply configmap and secrets
+      - name: Apply service account
         run: |
-            kubectl apply -f k8s/dev/configmap.yaml --context ${{ env.CLUSTER_NAME }}-dev
-            kubectl apply -f k8s/dev/secret.yaml --context ${{ env.CLUSTER_NAME }}-dev
+            APP_ROLE_ARN=$(cd environments/dev/app-infra && terragrunt output -raw app_role_arn)
+            envsubst < k8s/dev/serviceaccount.yaml | kubectl apply -f - \
+            --context ${{ env.CLUSTER_NAME }}-dev
 
       - name: Run migrations
         run: |
