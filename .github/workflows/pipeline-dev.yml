@@ -5,12 +5,11 @@ on:
       - main
   workflow_dispatch:
     
-
 env:
   AWS_REGION: us-east-1
   CLUSTER_NAME: satubinha-dev
   KUBECTL_VERSION: 1.27.3
-  TERRAGRUNT_VERSION: 0.44.0
+  TG_VERSION: 0.67.0
 
 jobs:
   deploy:
@@ -35,8 +34,17 @@ jobs:
 
       - name: Setup Terragrunt
         run: |
-          TERRAGRUNT_VERSION="${{ env.TERRAGRUNT_VERSION:}}"
-          curl -L -o terragrunt https://github.com/gruntwork-io/terragrunt/releases/download/v0.44.0/terragrunt_linux_amd64
+          TG_VERSION="${{ env.TG_VERSION}}"
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "x86_64" ]; then
+            ARCH_TYPE="amd64"
+          elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+            ARCH_TYPE="arm64"
+          else
+            echo "Unsupported architecture: $ARCH"
+            exit 1
+          fi        
+          curl -L -o terragrunt https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_${ARCH_TYPE}
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/
           
