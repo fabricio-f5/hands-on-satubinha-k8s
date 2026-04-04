@@ -13,6 +13,7 @@ spec:
       labels:
         app: db
     spec:
+      serviceAccountName: satubinha-app
       containers:
         - name: db
           image: cgr.dev/chainguard/postgres:latest
@@ -37,6 +38,9 @@ spec:
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
+            - name: secrets-store
+              mountPath: /mnt/secrets
+              readOnly: true
           livenessProbe:
             exec:
               command:
@@ -64,3 +68,9 @@ spec:
         - name: postgres-data
           persistentVolumeClaim:
             claimName: postgres-pvc
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: satubinha-secrets
