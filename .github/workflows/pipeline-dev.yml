@@ -108,6 +108,11 @@ jobs:
           kubectl apply -f k8s/dev/configmap.yaml \
             --context ${{ env.CLUSTER_NAME }}-dev
 
+      - name: Apply nginx configmap
+        run: |
+          kubectl apply -f k8s/dev/configmap-nginx.yaml \
+            --context ${{ env.CLUSTER_NAME }}-dev
+
       - name: Create Kubernetes secrets from SSM
         run: |
           DB_PASSWORD=$(aws ssm get-parameter \
