@@ -94,9 +94,9 @@ jobs:
           retention-days: 30
 
       - name: Terragrunt Plan
-        if: ${{ inputs.action == 'plan' || inputs.action == 'apply' }}
+        if: ${{ inputs.action == 'plan' }}
         working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
-        run: terragrunt --terragrunt-non-interactive plan -out=tfplan
+        run: terragrunt --terragrunt-non-interactive plan
 
       # ------------------------------------------------------------
       # Apply
@@ -105,8 +105,8 @@ jobs:
         if: ${{ inputs.action == 'apply' }}
         working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
         run: |
-          echo "Aplicando ${{ inputs.layer }} do ${{ inputs.environment }}..."
-          terragrunt --terragrunt-non-interactive --terragrunt-log-level debug apply -auto-approve tfplan
+            echo "Aplicando ${{ inputs.layer }} do ${{ inputs.environment }}..."
+            terragrunt --terragrunt-non-interactive apply -auto-approve
 
       - name: Terragrunt Output
         if: ${{ inputs.action == 'apply' }}
