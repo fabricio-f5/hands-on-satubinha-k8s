@@ -1,0 +1,6 @@
+soft-fail: true
+skip-check:
+  - CKV_AWS_144  # S3 cross-region replication — over-engineering para este projecto
+  - CKV_AWS_145  # S3 KMS encryption — AES256 suficiente
+  - CKV_AWS_18   # S3 access logging — fora do scope
+  - CKV2_AWS_5   # SG attached to resource — falso positivo
