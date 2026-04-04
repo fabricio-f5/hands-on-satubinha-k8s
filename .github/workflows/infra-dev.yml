@@ -75,7 +75,7 @@ jobs:
           ARCH=$(uname -m)
           if [ "$ARCH" = "x86_64" ]; then
             ARCH_TYPE="amd64"
-          elif [ "$ARCH" = "aarch64"  ] || [ "$ARCH" = "arm64" ]; then
+          elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
             ARCH_TYPE="arm64"
           else
             echo "Unsupported architecture: $ARCH"
@@ -122,29 +122,6 @@ jobs:
           tar -zxvf helm.tar.gz
           sudo mv linux-amd64/helm /usr/local/bin/
           helm version
-
-      - name: Install Secrets Store CSI Driver
-        run: |
-          helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
-          helm repo update
-
-          helm upgrade --install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver \
-            --namespace kube-system \
-            --set syncSecret.enabled=true \
-            --set enableSecretRotation=true \
-            --set rotationPollInterval=2m
-
-          kubectl rollout status daemonset/csi-secrets-store \
-            -n kube-system \
-            --timeout=120s
-
-      - name: Install AWS Provider
-        run: |
-          kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml
-
-          kubectl rollout status daemonset/csi-secrets-store-provider-aws \
-            -n kube-system \
-            --timeout=120s
 
       - name: Install EBS CSI Driver
         run: |

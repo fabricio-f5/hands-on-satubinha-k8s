@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      serviceAccountName: satubinha-app
+      containers:
+        - name: api
+          image: ${ECR_REGISTRY}/satubinha-app-img-stables:api-${API_TAG}
+          ports:
+            - containerPort: 4000
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: satubinha-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: satubinha-config
+                  key: DB_PORT
+            - name: API_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: satubinha-config
+                  key: API_PORT
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: satubinha-config
+                  key: NODE_ENV
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: satubinha-secrets
+                  key: db_name
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: satubinha-secrets
+                  key: db_user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: satubinha-secrets
+                  key: db_password
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

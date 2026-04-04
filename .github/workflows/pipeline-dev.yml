@@ -108,9 +108,29 @@ jobs:
           kubectl apply -f k8s/dev/configmap.yaml \
             --context ${{ env.CLUSTER_NAME }}-dev
 
-      - name: Apply SecretProviderClass
+      - name: Create Kubernetes secrets from SSM
         run: |
-          kubectl apply -f k8s/dev/secretproviderclass.yaml \
+          DB_PASSWORD=$(aws ssm get-parameter \
+            --name "/satubinha/dev/db_password" \
+            --with-decryption \
+            --query "Parameter.Value" \
+            --output text)
+          DB_USER=$(aws ssm get-parameter \
+            --name "/satubinha/dev/db_user" \
+            --with-decryption \
+            --query "Parameter.Value" \
+            --output text)
+          DB_NAME=$(aws ssm get-parameter \
+            --name "/satubinha/dev/db_name" \
+            --query "Parameter.Value" \
+            --output text)
+
+          kubectl create secret generic satubinha-secrets \
+            --from-literal=db_password="$DB_PASSWORD" \
+            --from-literal=db_user="$DB_USER" \
+            --from-literal=db_name="$DB_NAME" \
+            --dry-run=client -o yaml | \
+            kubectl apply -f - \
             --context ${{ env.CLUSTER_NAME }}-dev
 
       - name: Create gp2-immediate storage class
