@@ -16,14 +16,17 @@ variable "vpc_cidr" {
 variable "public_subnet_cidrs" {
   description = "Lista de CIDRs para as subnets públicas (uma por AZ)"
   type        = list(string)
+  ephemeral   = true
 }
 
 variable "private_subnet_cidrs" {
   description = "Lista de CIDRs para as subnets privadas (uma por AZ)"
   type        = list(string)
+  ephemeral   = true
 }
 
 variable "availability_zones" {
   description = "Lista de AZs onde as subnets serão criadas"
   type        = list(string)
+  ephemeral   = true
 }
