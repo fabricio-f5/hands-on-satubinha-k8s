@@ -28,7 +28,7 @@ inputs = {
   private_subnet_ids = dependency.network.outputs.private_subnet_ids
 
   # --- Node Group ---
-  instance_type = "t3.medium"
+  instance_type = "t3.small"
   node_desired  = 2
   node_min      = 1
   node_max      = 3

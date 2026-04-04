@@ -70,6 +70,7 @@ resource "aws_iam_role_policy_attachment" "nodes_ecr_policy" {
 # ------------------------------------------------------------
 data "tls_certificate" "cluster" {
   url = aws_eks_cluster.this.endpoint
+  insecure_skip_verify = true
 }
 
 resource "aws_iam_openid_connect_provider" "this" {

@@ -77,7 +77,3 @@ resource "aws_eks_node_group" "this" {
   }
 }
 
-data "tls_certificate" "cluster" {
-  url                  = aws_eks_cluster.this.endpoint
-  insecure_skip_verify = true
-}
