@@ -201,6 +201,13 @@ jobs:
             --timeout=120s \
             --context ${{ env.CLUSTER_NAME }}-dev
 
+      - name: Wait for ALB Controller ready
+        run: |
+          kubectl rollout status deployment/aws-load-balancer-controller \
+            -n kube-system \
+            --timeout=120s \
+            --context ${{ env.CLUSTER_NAME }}-dev
+
       - name: Deploy application
         run: |
           envsubst < k8s/dev/deployment-api.yaml | kubectl apply -f - \
