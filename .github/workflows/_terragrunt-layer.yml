@@ -107,7 +107,7 @@ jobs:
         working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
         run: |
             echo "Aplicando ${{ inputs.layer }} do ${{ inputs.environment }}..."
-            terragrunt --terragrunt-non-interactive apply -auto-approve
+            terragrunt run-all apply --auto-approve
 
       - name: Terragrunt Output
         if: ${{ inputs.action == 'apply' }}
