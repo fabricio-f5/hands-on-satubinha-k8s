@@ -17,7 +17,7 @@ on:
 env:
   AWS_REGION: us-east-1
   TF_VERSION: 1.10.0
-  TG_VERSION: 0.67.0
+  TG_VERSION: 0.66.9
   CHECKOV_VERSION: 3.2.0
 
 jobs:

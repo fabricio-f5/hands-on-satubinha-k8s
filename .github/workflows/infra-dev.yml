@@ -21,7 +21,7 @@ env:
   AWS_REGION: us-east-1
   CLUSTER_NAME: satubinha-dev
   KUBECTL_VERSION: 1.27.3
-  TG_VERSION: 0.67.0
+  TG_VERSION: 0.66.9
   HELM_VERSION: 3.14.0
 
 jobs:
