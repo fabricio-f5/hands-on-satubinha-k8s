@@ -94,11 +94,19 @@ jobs:
           chmod +x kubectl
           sudo mv kubectl /usr/local/bin/
 
-      - name: Update kubeconfig
+      - name: Wait for EKS cluster
         run: |
-          aws eks update-kubeconfig \
-            --region ${{ env.AWS_REGION }} \
-            --name ${{ env.CLUSTER_NAME }}
+            echo "Aguardando cluster EKS ficar ativo..."
+            aws eks wait cluster-active \
+            --name ${{ env.CLUSTER_NAME }} \
+            --region ${{ env.AWS_REGION }}
+            echo "Cluster ativo!"
+
+            - name: Update kubeconfig
+                run: |
+                aws eks update-kubeconfig \
+                    --region ${{ env.AWS_REGION }} \
+                    --name ${{ env.CLUSTER_NAME }}
 
       - name: Install Secrets Store CSI Driver
         run: |
