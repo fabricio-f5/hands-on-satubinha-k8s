@@ -156,6 +156,9 @@ jobs:
           kubectl get pods -n default --context ${{ env.CLUSTER_NAME }}-dev
           kubectl describe pod -l app=db -n default --context ${{ env.CLUSTER_NAME }}-dev | tail -40
           kubectl logs -l app=db -n default --context ${{ env.CLUSTER_NAME }}-dev || true
+          kubectl get pvc --context ${{ env.CLUSTER_NAME }}-dev
+          kubectl describe pvc postgres-pvc --context ${{ env.CLUSTER_NAME }}-dev
+          kubectl get storageclass --context ${{ env.CLUSTER_NAME }}-dev
 
       - name: Run migrations
         run: |
