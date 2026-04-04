@@ -66,7 +66,6 @@ resource "aws_iam_role_policy_attachment" "nodes_ecr_policy" {
 
 # ------------------------------------------------------------
 # OIDC Provider
-# Usa o issuer do cluster, não o endpoint
 # ------------------------------------------------------------
 resource "aws_iam_openid_connect_provider" "this" {
   client_id_list  = ["sts.amazonaws.com"]
@@ -81,6 +80,7 @@ resource "aws_iam_openid_connect_provider" "this" {
 
 # ------------------------------------------------------------
 # IAM Role — ALB Controller
+# Usa a política oficial da AWS para o ALB Controller
 # ------------------------------------------------------------
 resource "aws_iam_role" "alb_controller" {
   name = "satubinha-${var.environment}-alb-controller-role"
@@ -111,6 +111,64 @@ resource "aws_iam_role" "alb_controller" {
 resource "aws_iam_role_policy_attachment" "alb_controller" {
   role       = aws_iam_role.alb_controller.name
   policy_arn = "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess"
+}
+
+resource "aws_iam_role_policy" "alb_controller_ec2" {
+  name = "alb-controller-ec2-policy"
+  role = aws_iam_role.alb_controller.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:CreateSecurityGroup",
+          "ec2:DeleteSecurityGroup",
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:RevokeSecurityGroupIngress",
+          "ec2:RevokeSecurityGroupEgress",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeInstances",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeVpcs",
+          "ec2:DescribeInternetGateways",
+          "ec2:DescribeAvailabilityZones",
+          "ec2:DescribeAccountAttributes",
+          "ec2:DescribeAddresses",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:CreateTags",
+          "ec2:DeleteTags",
+          "ec2:DescribeTags"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "cognito-idp:DescribeUserPoolClient",
+          "acm:ListCertificates",
+          "acm:DescribeCertificate",
+          "iam:ListServerCertificates",
+          "iam:GetServerCertificate",
+          "waf-regional:GetWebACL",
+          "waf-regional:GetWebACLForResource",
+          "waf-regional:AssociateWebACL",
+          "waf-regional:DisassociateWebACL",
+          "wafv2:GetWebACL",
+          "wafv2:GetWebACLForResource",
+          "wafv2:AssociateWebACL",
+          "wafv2:DisassociateWebACL",
+          "shield:GetSubscriptionState",
+          "shield:DescribeProtection",
+          "shield:CreateProtection",
+          "shield:DeleteProtection"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }
 
 # ------------------------------------------------------------
