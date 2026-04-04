@@ -65,10 +65,8 @@ resource "aws_iam_role_policy_attachment" "nodes_ecr_policy" {
 }
 
 # ------------------------------------------------------------
-# OIDC Provider — movido do aws-app-infra para cá
-# É infraestrutura do cluster, não da aplicação
+# OIDC Provider
 # ------------------------------------------------------------
-
 resource "aws_iam_openid_connect_provider" "this" {
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = ["9e99a48a9960b14926bb7f3b02e22da2b0ab7280"]
@@ -116,7 +114,6 @@ resource "aws_iam_role_policy_attachment" "alb_controller" {
 
 # ------------------------------------------------------------
 # IAM Role — EBS CSI Driver
-# Permite que o EBS CSI Driver crie e gira volumes EBS
 # ------------------------------------------------------------
 resource "aws_iam_role" "ebs_csi_driver" {
   name = "satubinha-${var.environment}-ebs-csi-driver-role"
