@@ -11,7 +11,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          image: ${ECR_REGISTRY}/satubinha-app-img-stables:migrate-${IMAGE_TAG}
+          image: ${ECR_REGISTRY}/satubinha-app-img-stables:migrate-${MIGRATE_TAG}
           env:
             - name: DB_HOST
               valueFrom:
