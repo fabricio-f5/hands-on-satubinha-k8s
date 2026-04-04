@@ -115,9 +115,12 @@ jobs:
 
       - name: Create gp2-immediate storage class
         run: |
+          kubectl delete storageclass gp2-immediate \
+            --ignore-not-found=true \
+            --context ${{ env.CLUSTER_NAME }}-dev
           kubectl apply -f k8s/dev/storageclass.yaml \
-          --context ${{ env.CLUSTER_NAME }}-dev
-        
+            --context ${{ env.CLUSTER_NAME }}-dev
+
       - name: Delete existing PVC
         run: |
           kubectl delete pvc postgres-pvc \
