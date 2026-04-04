@@ -75,7 +75,7 @@ jobs:
           ARCH=$(uname -m)
           if [ "$ARCH" = "x86_64" ]; then
             ARCH_TYPE="amd64"
-          elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+          elif [ "$ARCH" = "aarch64"  ] || [ "$ARCH" = "arm64" ]; then
             ARCH_TYPE="arm64"
           else
             echo "Unsupported architecture: $ARCH"
@@ -115,36 +115,6 @@ jobs:
             --region ${{ env.AWS_REGION }} \
             --name ${{ env.CLUSTER_NAME }}
 
-      - name: Install Secrets Store CSI Driver
-        run: |
-          kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/secrets-store-csi-driver/main/deploy/rbac-secretproviderclass.yaml
-          kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/secrets-store-csi-driver/main/deploy/csidriver.yaml
-          kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/secrets-store-csi-driver/main/deploy/secrets-store.csi.x-k8s.io_secretproviderclasses.yaml
-          kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/secrets-store-csi-driver/main/deploy/secrets-store.csi.x-k8s.io_secretproviderclasspodstatuses.yaml
-          kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/secrets-store-csi-driver/main/deploy/secrets-store-csi-driver.yaml
-
-      - name: Install AWS Provider
-        run: |
-          kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml
-
-      - name: Install EBS CSI Driver
-        run: |
-          EBS_CSI_ROLE_ARN=$(cd environments/dev/eks && terragrunt output -raw ebs_csi_driver_role_arn)
-          
-          kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.27"
-          
-          kubectl rollout status deployment/ebs-csi-controller \
-            -n kube-system \
-            --timeout=120s
-          
-          kubectl annotate serviceaccount ebs-csi-controller-sa \
-            -n kube-system \
-            eks.amazonaws.com/role-arn=${EBS_CSI_ROLE_ARN} \
-            --overwrite
-
-          kubectl rollout restart deployment/ebs-csi-controller \
-            -n kube-system
-
       - name: Setup Helm
         run: |
           HELM_VERSION="${{ env.HELM_VERSION }}"
@@ -152,6 +122,47 @@ jobs:
           tar -zxvf helm.tar.gz
           sudo mv linux-amd64/helm /usr/local/bin/
           helm version
+
+      - name: Install Secrets Store CSI Driver
+        run: |
+          helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+          helm repo update
+
+          helm upgrade --install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver \
+            --namespace kube-system \
+            --set syncSecret.enabled=true \
+            --set enableSecretRotation=true \
+            --set rotationPollInterval=2m
+
+          kubectl rollout status daemonset/csi-secrets-store \
+            -n kube-system \
+            --timeout=120s
+
+      - name: Install AWS Provider
+        run: |
+          kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml
+
+          kubectl rollout status daemonset/csi-secrets-store-provider-aws \
+            -n kube-system \
+            --timeout=120s
+
+      - name: Install EBS CSI Driver
+        run: |
+          EBS_CSI_ROLE_ARN=$(cd environments/dev/eks && terragrunt output -raw ebs_csi_driver_role_arn)
+
+          kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.27"
+
+          kubectl rollout status deployment/ebs-csi-controller \
+            -n kube-system \
+            --timeout=120s
+
+          kubectl annotate serviceaccount ebs-csi-controller-sa \
+            -n kube-system \
+            eks.amazonaws.com/role-arn=${EBS_CSI_ROLE_ARN} \
+            --overwrite
+
+          kubectl rollout restart deployment/ebs-csi-controller \
+            -n kube-system
 
       - name: Install ALB Controller
         run: |
