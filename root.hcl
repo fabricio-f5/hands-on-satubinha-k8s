@@ -53,16 +53,3 @@ provider "tls" {}
 EOF
 }
 
-# ------------------------------------------------------------
-# Terraform provider cache — evita download repetido
-# Igual ao satubinha-iac-terragrunt
-# ------------------------------------------------------------
-terraform {
-  extra_arguments "cache_dir" {
-    commands = get_terraform_commands_that_need_vars()
-
-    env_vars = {
-      TF_PLUGIN_CACHE_DIR = "/home/runner/.terraform.d/plugin-cache"
-    }
-  }
-}
