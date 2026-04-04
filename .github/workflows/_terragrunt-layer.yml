@@ -93,9 +93,6 @@ jobs:
           path: checkov-report.txt
           retention-days: 30
 
-      - name: Configure Terraform plugin cache
-        run: terraform config -global plugin_cache_dir ~/.terraform.d/plugin-cache
-
       - name: Terragrunt Plan
         if: ${{ inputs.action == 'plan' || inputs.action == 'apply' }}
         working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
