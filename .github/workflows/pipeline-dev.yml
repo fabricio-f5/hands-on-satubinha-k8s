@@ -77,7 +77,7 @@ jobs:
           aws eks update-kubeconfig \
             --region ${{ env.AWS_REGION }} \
             --name ${{ env.CLUSTER_NAME }} \
-            --alias ${{ env.CLUSTER_NAME }}-dev
+            --alias ${{ env.CLUSTER_NAME }}
 
       - name: Get image tags
         run: |
