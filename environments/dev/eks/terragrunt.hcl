@@ -20,7 +20,7 @@ dependency "network" {
 inputs = {
   environment     = "dev"
   cluster_name    = "satubinha-dev"
-  cluster_version = "1.29"
+  cluster_version = "1.32"
 
   # --- Rede — vem da layer network ---
   vpc_id             = dependency.network.outputs.vpc_id
