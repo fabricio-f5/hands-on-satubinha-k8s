@@ -79,7 +79,7 @@ jobs:
           unset TF_VAR_public_subnet_cidrs
           unset TF_VAR_private_subnet_cidrs
           unset TF_VAR_availability_zones
-          terragrunt run-all apply -auto-approve tfplan
+          terragrunt apply -auto-approve tfplan
 
       - name: Terragrunt Output
         if: ${{ inputs.action == 'apply' }}
