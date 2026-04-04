@@ -15,6 +15,10 @@ on:
     secrets:
       AWS_ROLE_ARN:
         required: true
+      DB_USER:
+        required: false
+      DB_PASSWORD:
+        required: false
 
 env:
   AWS_REGION: us-east-1
@@ -58,6 +62,9 @@ jobs:
 
       - name: Terragrunt Validate
         working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
+        env:
+          TF_VAR_db_user: ${{ secrets.DB_USER }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         run: terragrunt --terragrunt-non-interactive validate
 
       # ------------------------------------------------------------
@@ -79,6 +86,9 @@ jobs:
       - name: Terragrunt Apply Saved Plan
         if: ${{ inputs.action == 'apply' }}
         working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
+        env:
+          TF_VAR_db_user: ${{ secrets.DB_USER }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         run: |
           echo "Aplicando ${{ inputs.layer }} do ${{ inputs.environment }} usando plano salvo..."
           rm -rf .terragrunt-cache
