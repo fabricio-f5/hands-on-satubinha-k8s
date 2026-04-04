@@ -70,6 +70,9 @@ jobs:
           echo "Gerando plano salvo..."
           terragrunt --terragrunt-non-interactive plan
 
+      - name: Debug TF vars
+        run: env | grep -i TF_VAR || echo "No TF_VAR found"
+
       # ------------------------------------------------------------
       # Terragrunt Apply — por módulo usando plano salvo
       # ------------------------------------------------------------
