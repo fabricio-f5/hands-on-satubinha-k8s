@@ -70,12 +70,11 @@ resource "aws_iam_role_policy_attachment" "nodes_ecr_policy" {
 # ------------------------------------------------------------
 data "tls_certificate" "cluster" {
   url = aws_eks_cluster.this.endpoint
-  insecure_skip_verify = true
 }
 
 resource "aws_iam_openid_connect_provider" "this" {
   client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = [data.tls_certificate.cluster.certificates[0].sha1_fingerprint]
+  thumbprint_list = ["9e99a48a9960b14926bb7f3b02e22da2b0ab7280"]
   url             = aws_eks_cluster.this.endpoint
 
   tags = {
