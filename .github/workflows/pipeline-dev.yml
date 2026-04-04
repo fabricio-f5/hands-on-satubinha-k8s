@@ -149,21 +149,21 @@ jobs:
       - name: Run migrations
         run: |
           envsubst < k8s/dev/job-migrate.yaml | kubectl apply -f - \
-            --context ${{ env.CLUSTER_NAME }}-dev
+            --context ${{ env.CLUSTER_NAME }}
 
       - name: Wait for migrations
         run: |
           kubectl wait --for=condition=complete job/migrate \
             --timeout=120s \
-            --context ${{ env.CLUSTER_NAME }}-dev
+            --context ${{ env.CLUSTER_NAME }}
 
       - name: Deploy application
         run: |
           envsubst < k8s/dev/deployment-api.yaml | kubectl apply -f - \
-            --context ${{ env.CLUSTER_NAME }}-dev
+            --context ${{ env.CLUSTER_NAME }}
           envsubst < k8s/dev/deployment-front.yaml | kubectl apply -f - \
-            --context ${{ env.CLUSTER_NAME }}-dev
+            --context ${{ env.CLUSTER_NAME }}
           kubectl apply -f k8s/dev/service.yaml \
-            --context ${{ env.CLUSTER_NAME }}-dev
+            --context ${{ env.CLUSTER_NAME }}
           kubectl apply -f k8s/dev/ingress.yaml \
-            --context ${{ env.CLUSTER_NAME }}-dev
+            --context ${{ env.CLUSTER_NAME }}
