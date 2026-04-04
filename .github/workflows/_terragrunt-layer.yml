@@ -1,4 +1,4 @@
-name: "Reusable — Terragrunt Layer with Saved Plan"
+name: "Reusable — Terragrunt Layer CI"
 
 on:
   workflow_call:
@@ -61,7 +61,7 @@ jobs:
         run: terragrunt --terragrunt-non-interactive validate
 
       # ------------------------------------------------------------
-      # Terragrunt Plan por módulo (salvo)
+      # Terragrunt Plan — salva plano por módulo
       # ------------------------------------------------------------
       - name: Terragrunt Plan (save plan)
         if: ${{ inputs.action == 'plan' }}
@@ -72,7 +72,7 @@ jobs:
           terragrunt --terragrunt-non-interactive show -no-color tfplan
 
       # ------------------------------------------------------------
-      # Terragrunt Apply por módulo usando plano salvo
+      # Terragrunt Apply — por módulo usando plano salvo
       # ------------------------------------------------------------
       - name: Terragrunt Apply Saved Plan
         if: ${{ inputs.action == 'apply' }}
@@ -83,7 +83,8 @@ jobs:
           unset TF_VAR_public_subnet_cidrs
           unset TF_VAR_private_subnet_cidrs
           unset TF_VAR_availability_zones
-          terragrunt apply -auto-approve tfplan
+          # Aplica o plano diretamente no diretório do módulo
+          terragrunt apply -auto-approve ./tfplan
 
       - name: Terragrunt Output
         if: ${{ inputs.action == 'apply' }}
