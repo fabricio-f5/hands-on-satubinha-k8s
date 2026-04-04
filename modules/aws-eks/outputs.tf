@@ -32,3 +32,8 @@ output "alb_controller_role_arn" {
   description = "ARN da IAM Role do ALB Controller"
   value       = aws_iam_role.alb_controller.arn
 }
+
+output "ebs_csi_driver_role_arn" {
+  description = "ARN da IAM Role do EBS CSI Driver"
+  value       = aws_iam_role.ebs_csi_driver.arn
+}

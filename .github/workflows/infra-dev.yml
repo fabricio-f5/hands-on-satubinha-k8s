@@ -126,6 +126,10 @@ jobs:
         run: |
           kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml
 
+      - name: Install EBS CSI Driver
+        run: |
+          kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.27"
+
       - name: Setup Helm
         run: |
             HELM_VERSION="${{ env.HELM_VERSION }}"
