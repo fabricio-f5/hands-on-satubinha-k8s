@@ -158,8 +158,17 @@ data "aws_caller_identity" "current" {}
 # Access Entry — acesso local para debugging
 # ------------------------------------------------------------
 resource "aws_eks_access_entry" "admin" {
-  cluster_name      = aws_eks_cluster.this.name
-  principal_arn     = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/iamStudent"
-  kubernetes_groups = ["system:masters"]
-  type              = "STANDARD"
+  cluster_name  = aws_eks_cluster.this.name
+  principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/iamStudent"
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "admin" {
+  cluster_name  = aws_eks_cluster.this.name
+  principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/iamStudent"
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
 }
