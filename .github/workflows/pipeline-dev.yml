@@ -121,11 +121,19 @@ jobs:
           kubectl apply -f k8s/dev/storageclass.yaml \
             --context ${{ env.CLUSTER_NAME }}-dev
 
+      - name: Delete existing DB deployment
+        run: |
+          kubectl delete deployment db \
+            --context ${{ env.CLUSTER_NAME }}-dev \
+            --ignore-not-found=true \
+            --wait=false
+
       - name: Delete existing PVC
         run: |
           kubectl delete pvc postgres-pvc \
             --context ${{ env.CLUSTER_NAME }}-dev \
-            --ignore-not-found=true
+            --ignore-not-found=true \
+            --wait=false
 
       - name: Apply PVC
         run: |
