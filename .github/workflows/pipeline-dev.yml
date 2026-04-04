@@ -132,6 +132,15 @@ jobs:
           kubectl apply -f k8s/dev/pvc.yaml \
             --context ${{ env.CLUSTER_NAME }}-dev
 
+      - name: Wait for PVC bound
+        run: |
+          echo "Aguardando PVC ficar bound..."
+          kubectl wait pvc/postgres-pvc \
+            --for=jsonpath='{.status.phase}'=Bound \
+            --timeout=120s \
+            --context ${{ env.CLUSTER_NAME }}-dev
+          echo "PVC bound!"
+
       - name: Apply DB deployment
         run: |
           kubectl apply -f k8s/dev/deployment-db.yaml \
