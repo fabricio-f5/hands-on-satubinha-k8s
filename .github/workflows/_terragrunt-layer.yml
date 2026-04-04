@@ -81,13 +81,9 @@ jobs:
         working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
         run: |
           echo "Aplicando ${{ inputs.layer }} do ${{ inputs.environment }} usando plano salvo..."
-          # Remove variáveis TF_VAR que poderiam conflitar
-          unset TF_VAR_public_subnet_cidrs
-          unset TF_VAR_private_subnet_cidrs
-          unset TF_VAR_availability_zones
-          find . -name "tfplan" -delete
-          find . -name "tfplan_destroy" -delete
-          terragrunt --terragrunt-non-interactive --terragrunt-log-level debug apply -auto-approve 2>&1
+          rm -rf .terragrunt-cache
+          terragrunt --terragrunt-non-interactive apply -auto-approve 2>&1
+          
 
       - name: Terragrunt Output
         if: ${{ inputs.action == 'apply' }}
