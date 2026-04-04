@@ -117,6 +117,12 @@ jobs:
         run: |
           kubectl get storageclass --context ${{ env.CLUSTER_NAME }}-dev
 
+      - name: Delete existing PVC
+        run: |
+          kubectl delete pvc postgres-pvc \
+          --context ${{ env.CLUSTER_NAME }} \
+          --ignore-not-found=true
+
       - name: Apply PVC
         run: |
           kubectl apply -f k8s/dev/pvc.yaml \
