@@ -129,6 +129,13 @@ jobs:
             --timeout=120s \
             --context ${{ env.CLUSTER_NAME }}-dev
 
+      - name: Debug DB pod
+        if: failure()
+        run: |
+          kubectl get pods -n default --context ${{ env.CLUSTER_NAME }}-dev
+          kubectl describe pod -l app=db -n default --context ${{ env.CLUSTER_NAME }}-dev | tail -40
+          kubectl logs -l app=db -n default --context ${{ env.CLUSTER_NAME }}-dev || true
+
       - name: Run migrations
         run: |
           envsubst < k8s/dev/job-migrate.yaml | kubectl apply -f - \
