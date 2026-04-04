@@ -102,11 +102,11 @@ jobs:
             --region ${{ env.AWS_REGION }}
             echo "Cluster ativo!"
 
-            - name: Update kubeconfig
-                run: |
-                aws eks update-kubeconfig \
-                    --region ${{ env.AWS_REGION }} \
-                    --name ${{ env.CLUSTER_NAME }}
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+          --region ${{ env.AWS_REGION }} \
+          --name ${{ env.CLUSTER_NAME }}
 
       - name: Install Secrets Store CSI Driver
         run: |
