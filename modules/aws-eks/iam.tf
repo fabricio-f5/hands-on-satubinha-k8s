@@ -66,11 +66,12 @@ resource "aws_iam_role_policy_attachment" "nodes_ecr_policy" {
 
 # ------------------------------------------------------------
 # OIDC Provider
+# Usa o issuer do cluster, não o endpoint
 # ------------------------------------------------------------
 resource "aws_iam_openid_connect_provider" "this" {
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = ["9e99a48a9960b14926bb7f3b02e22da2b0ab7280"]
-  url             = aws_eks_cluster.this.endpoint
+  url             = aws_eks_cluster.this.identity[0].oidc[0].issuer
 
   tags = {
     Name        = "satubinha-${var.environment}-oidc"
