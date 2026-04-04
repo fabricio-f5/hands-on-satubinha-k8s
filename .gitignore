@@ -1,0 +1,21 @@
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+tfplan
+*.tfplan
+tfplan_destroy
+*.tfplan_destroy
+
+# Terragrunt cache
+.terragrunt-cache/
+
+# Credenciais
+*.pem
+*.key
+.env
+*.env
+
+# OS
+.DS_Store
