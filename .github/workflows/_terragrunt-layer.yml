@@ -52,8 +52,16 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: GitHubActions-${{ github.run_id }}
 
+      - name: Terraform Format Check
+        working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
+        run: terraform fmt -check
+
+      - name: Terragrunt Validate
+        working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
+        run: terragrunt --terragrunt-non-interactive validate
+
       # ------------------------------------------------------------
-      # Terragrunt Plan com arquivo salvo
+      # Terragrunt Plan por módulo (salvo)
       # ------------------------------------------------------------
       - name: Terragrunt Plan (save plan)
         if: ${{ inputs.action == 'plan' }}
@@ -61,14 +69,10 @@ jobs:
         run: |
           echo "Gerando plano salvo..."
           terragrunt --terragrunt-non-interactive plan -out=tfplan
-
-      - name: Terragrunt Show Plan
-        if: ${{ inputs.action == 'plan' }}
-        working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
-        run: terragrunt --terragrunt-non-interactive show -no-color tfplan
+          terragrunt --terragrunt-non-interactive show -no-color tfplan
 
       # ------------------------------------------------------------
-      # Terragrunt Apply usando o plano salvo
+      # Terragrunt Apply por módulo usando plano salvo
       # ------------------------------------------------------------
       - name: Terragrunt Apply Saved Plan
         if: ${{ inputs.action == 'apply' }}
@@ -85,3 +89,30 @@ jobs:
         if: ${{ inputs.action == 'apply' }}
         working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
         run: terragrunt --terragrunt-non-interactive output -json
+
+      # ------------------------------------------------------------
+      # Plan Destroy — mostra o que seria destruído, sem destruir
+      # ------------------------------------------------------------
+      - name: Terragrunt Plan Destroy
+        if: ${{ inputs.action == 'plan_destroy' }}
+        working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
+        run: |
+          echo "Calculando impacto do destroy — nenhum recurso será removido..."
+          terragrunt --terragrunt-non-interactive plan -destroy -out=tfplan_destroy
+          terragrunt --terragrunt-non-interactive show -no-color tfplan_destroy
+
+      # ------------------------------------------------------------
+      # Destroy — proteção contra execução acidental
+      # ------------------------------------------------------------
+      - name: Confirm Destroy Intent
+        if: ${{ inputs.action == 'destroy' }}
+        run: |
+          echo "⚠️  DESTROY solicitado por: ${{ github.actor }}"
+          echo "⚠️  Ambiente: ${{ inputs.environment }} - ${{ inputs.layer }}"
+          echo "⚠️  Commit: ${{ github.sha }}"
+          echo "Recursos serão permanentemente removidos."
+
+      - name: Terragrunt Destroy
+        if: ${{ inputs.action == 'destroy' }}
+        working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
+        run: terragrunt --terragrunt-non-interactive destroy -auto-approve
