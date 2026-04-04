@@ -115,19 +115,9 @@ jobs:
 
       - name: Create gp2-immediate storage class
         run: |
-          kubectl apply -f - --context ${{ env.CLUSTER_NAME }}-dev <<EOF
-          apiVersion: storage.k8s.io/v1
-          kind: StorageClass
-          metadata:
-          name: gp2-immediate
-          provisioner: ebs.csi.aws.com
-          parameters:
-          type: gp2
-          reclaimPolicy: Delete
-          volumeBindingMode: Immediate
-          allowVolumeExpansion: true
-          EOF
-
+          kubectl apply -f k8s/dev/storageclass.yaml \
+          --context ${{ env.CLUSTER_NAME }}-dev
+        
       - name: Delete existing PVC
         run: |
           kubectl delete pvc postgres-pvc \
