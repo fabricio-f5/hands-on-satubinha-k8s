@@ -113,3 +113,38 @@ resource "aws_iam_role_policy_attachment" "alb_controller" {
   role       = aws_iam_role.alb_controller.name
   policy_arn = "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess"
 }
+
+# ------------------------------------------------------------
+# IAM Role — EBS CSI Driver
+# Permite que o EBS CSI Driver crie e gira volumes EBS
+# ------------------------------------------------------------
+resource "aws_iam_role" "ebs_csi_driver" {
+  name = "satubinha-${var.environment}-ebs-csi-driver-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Federated = aws_iam_openid_connect_provider.this.arn
+      }
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${replace(aws_iam_openid_connect_provider.this.url, "https://", "")}:sub" = "system:serviceaccount:kube-system:ebs-csi-controller-sa"
+          "${replace(aws_iam_openid_connect_provider.this.url, "https://", "")}:aud" = "sts.amazonaws.com"
+        }
+      }
+    }]
+  })
+
+  tags = {
+    Name        = "satubinha-${var.environment}-ebs-csi-driver-role"
+    Environment = var.environment
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
+  role       = aws_iam_role.ebs_csi_driver.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+}
