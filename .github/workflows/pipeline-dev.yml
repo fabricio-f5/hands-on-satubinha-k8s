@@ -113,6 +113,10 @@ jobs:
           kubectl apply -f k8s/dev/secretproviderclass.yaml \
             --context ${{ env.CLUSTER_NAME }}-dev
 
+      - name: Debug storage classes
+        run: |
+          kubectl get storageclass --context ${{ env.CLUSTER_NAME }}-dev
+
       - name: Apply PVC
         run: |
           kubectl apply -f k8s/dev/pvc.yaml \
