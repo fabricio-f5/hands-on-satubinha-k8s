@@ -95,11 +95,23 @@ resource "aws_iam_role_policy" "github_actions" {
           "s3:GetObject",
           "s3:PutObject",
           "s3:DeleteObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:GetBucketVersioning",
+          "s3:GetBucketAcl",
+          "s3:GetBucketLogging",
+          "s3:GetBucketPolicy",
+          "s3:GetBucketPublicAccessBlock",
+          "s3:CreateBucket",
+          "s3:PutBucketVersioning",
+          "s3:GetEncryptionConfiguration",
+          "s3:PutEncryptionConfiguration",
+          "s3:PutBucketPolicy"          
         ]
         Resource = [
-          "arn:aws:s3:::hands-on-satubinha-tfstate",
-          "arn:aws:s3:::hands-on-satubinha-tfstate/*"
+        "arn:aws:s3:::hands-on-satubinha-tfstate",
+        "arn:aws:s3:::hands-on-satubinha-tfstate/*",
+        "arn:aws:s3:::hands-on-satubinha-k8s-tfstate",
+        "arn:aws:s3:::hands-on-satubinha-k8s-tfstate/*"
         ]
       },
       {
