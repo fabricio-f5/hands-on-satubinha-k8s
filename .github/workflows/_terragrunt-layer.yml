@@ -68,8 +68,7 @@ jobs:
         working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
         run: |
           echo "Gerando plano salvo..."
-          terragrunt --terragrunt-non-interactive plan -out=tfplan
-          terragrunt --terragrunt-non-interactive show -no-color tfplan
+          terragrunt --terragrunt-non-interactive plan
 
       # ------------------------------------------------------------
       # Terragrunt Apply — por módulo usando plano salvo
@@ -79,12 +78,7 @@ jobs:
         working-directory: environments/${{ inputs.environment }}/${{ inputs.layer }}
         run: |
           echo "Aplicando ${{ inputs.layer }} do ${{ inputs.environment }} usando plano salvo..."
-          # Remove variáveis TF_VAR que poderiam conflitar
-          unset TF_VAR_public_subnet_cidrs
-          unset TF_VAR_private_subnet_cidrs
-          unset TF_VAR_availability_zones
-          # Aplica o plano diretamente no diretório do módulo
-          terragrunt apply -auto-approve ./tfplan
+          terragrunt --terragrunt-non-interactive apply -auto-approve
 
       - name: Terragrunt Output
         if: ${{ inputs.action == 'apply' }}
