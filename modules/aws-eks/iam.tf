@@ -68,9 +68,6 @@ resource "aws_iam_role_policy_attachment" "nodes_ecr_policy" {
 # OIDC Provider — movido do aws-app-infra para cá
 # É infraestrutura do cluster, não da aplicação
 # ------------------------------------------------------------
-data "tls_certificate" "cluster" {
-  url = aws_eks_cluster.this.endpoint
-}
 
 resource "aws_iam_openid_connect_provider" "this" {
   client_id_list  = ["sts.amazonaws.com"]
