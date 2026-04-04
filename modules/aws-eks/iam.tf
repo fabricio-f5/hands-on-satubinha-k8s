@@ -148,3 +148,18 @@ resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
   role       = aws_iam_role.ebs_csi_driver.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
 }
+
+# ------------------------------------------------------------
+# Data source — Account ID atual
+# ------------------------------------------------------------
+data "aws_caller_identity" "current" {}
+
+# ------------------------------------------------------------
+# Access Entry — acesso local para debugging
+# ------------------------------------------------------------
+resource "aws_eks_access_entry" "admin" {
+  cluster_name      = aws_eks_cluster.this.name
+  principal_arn     = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/iamStudent"
+  kubernetes_groups = ["system:masters"]
+  type              = "STANDARD"
+}
