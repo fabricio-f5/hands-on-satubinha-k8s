@@ -39,6 +39,13 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
+      - name: Create Terraform plugin cache dir
+        run: mkdir -p ~/.terraform.d/plugin-cache
+      
+      
+      - name: Configure Terraform plugin cache
+        run: terraform config -global plugin_cache_dir ~/.terraform.d/plugin-cache
+
       - name: Setup Terragrunt
         run: |
           TG_VERSION="${{ env.TG_VERSION }}"
